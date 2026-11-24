@@ -1,0 +1,60 @@
+name: Hard desk proof check
+on:
+  push:
+    branches: ['scratch/hard-desk-check-20261124a']
+    paths-ignore: ['scratch-check/receipt.txt']
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Prepare disk
+        run: |
+          sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc
+      - name: Restore checker environment
+        id: cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            ~/.elan
+            lean/.lake
+          key: hard-desk-lean-${{ hashFiles('lean/lean-toolchain','lean/lake-manifest.json','lean/CheckLemma.lean') }}
+      - name: Prepare the pinned project
+        working-directory: lean
+        run: |
+          set -eu
+          if ! test -x "$HOME/.elan/bin/lake"; then
+            curl --proto '=https' --tlsv1.2 -fsSL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y --default-toolchain none
+          fi
+          export PATH="$HOME/.elan/bin:$PATH"
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+          lean --version
+          if [[ '${{ steps.cache.outputs.cache-hit }}' != 'true' ]]; then
+            lake exe cache get
+          fi
+      - name: Save warmed checker
+        if: steps.cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ~/.elan
+            lean/.lake
+          key: ${{ steps.cache.outputs.cache-primary-key }}
+      - name: Run project checker
+        if: hashFiles('scratch-check/input.json') != ''
+        run: |
+          python3 - <<'PY'
+          import json, pathlib, re, subprocess
+          cfg = json.loads(pathlib.Path("scratch-check/input.json").read_text())
+          module = cfg["module"]
+          assert re.fullmatch(r"[LR]_[A-Za-z0-9_]+", module)
+          kind = cfg["kind"]
+          assert kind in {"check", "refute", "reduce"}
+          subprocess.run(["node","tools/check-lean.mjs",
+            f"lean/PEqualNP/Outside/{module}.lean","scratch-check/statement.txt",kind],check=True)
+          PY
