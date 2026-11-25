@@ -1,5 +1,27 @@
-let Q := ([(50,114),(69,197),(104,105),(104,232),(116,124),(138,394),(201,203),(201,457),(208,216),(261,325),(276,308),(385,401),(402,406)] : List (Fin 512 × Fin 512)).toFinset
-    let extend := fun (n : Fin 512) => n.val + (if n.val &&& 5 = 0 then 0 else 512)
-    let pool := fun (p : Fin 1024) (a : Bool) (n : Fin 512) =>
-      if a then decide (extend n &&& p.val = p.val) else decide (extend n &&& p.val ≠ 0)
-    ∀ (p : Fin 1024) (a : Bool), (Q.filter fun e => pool p a e.1 ≠ pool p a e.2).card ≤ 2
+let edge (a : Nat) : Bool :=
+  ([1,12,23,34,40,5,16,27,38,57,68,85] : List Nat).any fun e =>
+    a.testBit (e / 10) && a.testBit (e % 10)
+let signature (u a : Nat) : List Bool :=
+  edge a :: (((List.range 9).filter fun i => !(u.testBit i)).map fun i => edge (a ||| (1 <<< i)))
+let verifyBlock (u : Nat) (data : Nat × Bool × List Nat) : Bool :=
+  let k := data.1
+  let chain := data.2.1
+  let rows := data.2.2
+  (rows.all fun a => (a &&& u) == a) &&
+    if chain then
+      decide (k + 1 ≤ rows.length) &&
+        (rows.zip (rows.drop 1)).all fun pair =>
+          ((pair.1 &&& pair.2) == pair.1) && (signature u pair.1 != signature u pair.2)
+    else
+      decide (2 ^ (k - 1) < ((rows.map (signature u)).eraseDups.length))
+let Record := Nat × (Nat × Bool × List Nat) × (Nat × Bool × List Nat)
+let verifyRecord (r : Record) : Bool :=
+  verifyBlock r.1 r.2.1 && verifyBlock (511 - r.1) r.2.2
+let lower (r : Record) : Nat := r.2.1.1 + r.2.2.1
+
+let fourMasks : List Nat :=
+  (List.range 512).filter fun u => ((List.range 9).filter u.testBit).length == 4
+∃ records : List Record,
+  records.map Prod.fst = fourMasks ∧ records.all verifyRecord = true ∧
+      (records.map lower).count 7 = 36 ∧ (records.map lower).count 8 = 90 ∧
+      records.all (fun r => decide (7 ≤ lower r)) = true

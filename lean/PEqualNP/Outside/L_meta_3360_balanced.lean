@@ -10,7 +10,9 @@ def signature (u a : Nat) : List Bool :=
   edge a :: (((List.range 9).filter fun i => !(u.testBit i)).map fun i => edge (a ||| (1 <<< i)))
 
 def verifyBlock (u : Nat) (data : Nat × Bool × List Nat) : Bool :=
-  let (k, chain, rows) := data
+  let k := data.1
+  let chain := data.2.1
+  let rows := data.2.2
   (rows.all fun a => (a &&& u) == a) &&
     if chain then
       decide (k + 1 ≤ rows.length) &&
@@ -242,7 +244,9 @@ theorem PEqualNP.Outside.L_meta_3360_balanced :
   let signature (u a : Nat) : List Bool :=
     edge a :: (((List.range 9).filter fun i => !(u.testBit i)).map fun i => edge (a ||| (1 <<< i)))
   let verifyBlock (u : Nat) (data : Nat × Bool × List Nat) : Bool :=
-    let (k, chain, rows) := data
+    let k := data.1
+    let chain := data.2.1
+    let rows := data.2.2
     (rows.all fun a => (a &&& u) == a) &&
       if chain then
         decide (k + 1 ≤ rows.length) &&
