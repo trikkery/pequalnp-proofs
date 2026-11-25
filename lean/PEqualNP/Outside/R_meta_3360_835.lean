@@ -2,8 +2,8 @@ import PEqualNP.Defs
 
 theorem PEqualNP.Outside.R_meta_3360_835
     (profiles : let row := fun (i j k : Fin 9) (pattern : Fin 8) (outside : Fin 10) (v : Fin 9) =>
-      if v = i then pattern.val.testBit 0 else if v = j then pattern.val.testBit 1
-      else if v = k then pattern.val.testBit 2 else decide (v.val = outside.val)
+      if v = i then (pattern.val + (0 : ℕ)).testBit 0 else if v = j then (pattern.val + (0 : ℕ)).testBit 1
+      else if v = k then (pattern.val + (0 : ℕ)).testBit 2 else decide (v.val = outside.val + (0 : ℕ))
     let target := fun (z : Fin 9 → Bool) =>
       ([1,12,23,34,40,5,16,27,38,57,68,85] : List ℕ).any fun e =>
         z (Fin.ofNat 9 (e/10)) && z (Fin.ofNat 9 (e%10))
@@ -11,8 +11,8 @@ theorem PEqualNP.Outside.R_meta_3360_835
       ∀ a b : Fin 5, a ≠ b → ∃ t : Fin 10,
         target (row i j k (pat a) t) ≠ target (row i j k (pat b) t))
     (residual : let row := fun (i j k : Fin 9) (pattern : Fin 8) (outside : Fin 10) (v : Fin 9) =>
-      if v = i then pattern.val.testBit 0 else if v = j then pattern.val.testBit 1
-      else if v = k then pattern.val.testBit 2 else decide (v.val = outside.val)
+      if v = i then (pattern.val + (0 : ℕ)).testBit 0 else if v = j then (pattern.val + (0 : ℕ)).testBit 1
+      else if v = k then (pattern.val + (0 : ℕ)).testBit 2 else decide (v.val = outside.val + (0 : ℕ))
     let target := fun (z : Fin 9 → Bool) =>
       ([1,12,23,34,40,5,16,27,38,57,68,85] : List ℕ).any fun e =>
         z (Fin.ofNat 9 (e/10)) && z (Fin.ofNat 9 (e%10))
